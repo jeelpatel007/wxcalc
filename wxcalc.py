@@ -1,35 +1,65 @@
+from __future__ import division
 import wx
+from math import *
+from exceptions import Exception
 
-class Example(wx.Frame):
+class Calculator(wx.Dialog):
+    '''Main calculator dialog'''
+    def __init__(self):
+        wx.Dialog.__init__(self, None, -1, "Calulator")
+        sizer = wx.BoxSizer(wx.VERTICAL)
 
-    def __init__(self, *args, **kwargs):
-        super(Example, self).__init__(*args, **kwargs)
+        self.display = wx.ComboBox(self, -1)
+        sizer.Add(self.display, 0, wx.EXPAND)
 
-        self.InitUI()
+        gsizer = wx.GridSizer(4,4)
+        for row in (("7","8","9","/"),
+                    ("4","5","6","*"),
+                    ("1","2","3","-"),
+                    ("0",".","C","+")):
+            for label in row:
+                b = wx.Button(self, -1, label)
+                gsizer.Add(b)
+                self.Bind(wx.EVT_BUTTON, self.OnButton, b)
+        sizer.Add(gsizer, 1, wx.EXPAND)
 
-    def InitUI(self):
+        b = wx.Button(self, -1, "=")
+        self.Bind(wx.EVT_BUTTON, self.OnButton, b)
+        sizer.Add(b, 0, wx.EXPAND)
+        self.equal = b
 
-        menubar = wx.MenuBar()
-        fileMenu = wx.Menu()
-        fitem = fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application')
-        menubar.Append(fileMenu, '&File')
-        self.SetMenuBar(menubar)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.CenterOnScreen()
 
-        self.Bind(wx.EVT_MENU, self.onQuit, fitem)
+    def OnButton(self, evt):
+        '''Handle button click event'''
+        label = evt.GetEventObject().GetLabel()
 
-        self.SetSize((300,200))
-        self.SetTitle('Calculator')
-        self.Centre()
-        self.Show(True)
+        if label == "=":
+            try:
+                compute = self.display.GetValue()
+                if not compute.strip():
+                    return
 
-    def onQuit(self, e):
-        self.Close()
+                result = eval(compute)
 
-def main():
+                self.display.Insert(compute, 0)
 
-    ex = wx.App()
-    Example(None)
-    ex.MainLoop()
+                self.display.SetValue(str(result))
+           # except Exception e:
+            #    wx.LogError(str(e))
+             #   return
 
-if __name__ == '__main__':
-    main()
+        elif label == "C":
+            self.display.SetValue("")
+
+        else:
+            self.display.SetValue(self.display.GetValue() + label)
+            self.equal.SetFocus()
+
+if __name__ == "__main__":
+    app = wx.PySimpleApp()
+    dlg = Calculator()
+    dlg.ShowModal()
+    dlg.Destroy()
